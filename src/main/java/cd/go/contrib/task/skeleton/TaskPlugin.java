@@ -39,11 +39,13 @@ public class TaskPlugin implements GoPlugin {
     public static final String REQUEST_TYPE = "-G";
     public static final String REQUEST_PROPERTY = "RequestType";
     public static final Gson GSON = new GsonBuilder().serializeNulls().create();
+    public static ConsoleLogger consoleLogger;
 
     public static Logger LOGGER = Logger.getLoggerFor(TaskPlugin.class);
 
     @Override
     public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
+        consoleLogger = ConsoleLogger.getLogger(goApplicationAccessor);
     }
 
     @Override
