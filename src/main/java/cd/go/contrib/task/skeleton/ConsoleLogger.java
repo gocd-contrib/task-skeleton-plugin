@@ -17,6 +17,7 @@
 package cd.go.contrib.task.skeleton;
 
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 import com.thoughtworks.go.plugin.api.GoApplicationAccessor;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
 import com.thoughtworks.go.plugin.api.request.DefaultGoApiRequest;
@@ -26,10 +27,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.List;
 
 public class ConsoleLogger {
     private static final String SEND_CONSOLE_LOG = "go.processor.task.console-log";
-    private static ConsoleLogger consoleLogger;
+    private static volatile ConsoleLogger consoleLogger;
     private final GoApplicationAccessor accessor;
 
     private ConsoleLogger(GoApplicationAccessor accessor) {
@@ -66,7 +68,7 @@ public class ConsoleLogger {
     }
 
     private void sendLog(ConsoleLogMessage consoleLogMessage) {
-        DefaultGoApiRequest request = new DefaultGoApiRequest(SEND_CONSOLE_LOG, "1.0", new GoPluginIdentifier("task", Arrays.asList("1.0")));
+        DefaultGoApiRequest request = new DefaultGoApiRequest(SEND_CONSOLE_LOG, "1.0", new GoPluginIdentifier("task", List.of("1.0")));
         request.setRequestBody(consoleLogMessage.toJSON());
         accessor.submit(request);
     }
@@ -84,8 +86,10 @@ public class ConsoleLogger {
     }
 
     static class ConsoleLogMessage {
-        private LogLevel logLevel;
-        private String message;
+        @Expose
+        private final LogLevel logLevel;
+        @Expose
+        private final String message;
 
         public ConsoleLogMessage(LogLevel logLevel, String message) {
             this.message = message;

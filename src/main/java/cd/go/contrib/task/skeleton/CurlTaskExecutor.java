@@ -20,6 +20,7 @@ import com.thoughtworks.go.plugin.api.task.JobConsoleLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static cd.go.contrib.task.skeleton.TaskPlugin.consoleLogger;
@@ -72,9 +73,7 @@ public class CurlTaskExecutor {
         }
         if (taskTaskConfig.getAdditionalOptions() != null && !taskTaskConfig.getAdditionalOptions().trim().isEmpty()) {
             String parts[] = taskTaskConfig.getAdditionalOptions().split("\\s+");
-            for (String part : parts) {
-                command.add(part);
-            }
+            command.addAll(Arrays.asList(parts));
         }
         command.add("-o");
         command.add(destinationFilePath);

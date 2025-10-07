@@ -19,15 +19,16 @@ package cd.go.contrib.task.skeleton;
 import java.util.Map;
 
 public class Context {
-    private final Map environmentVariables;
+    private final Map<String, String> environmentVariables;
     private final String workingDir;
 
-    public Context(Map context) {
-        environmentVariables = (Map) context.get("environmentVariables");
+    @SuppressWarnings("unchecked")
+    public Context(Map<String, ?> context) {
+        environmentVariables = (Map<String, String>) context.get("environmentVariables");
         workingDir = (String) context.get("workingDirectory");
     }
 
-    public Map getEnvironmentVariables() {
+    public Map<String, String> getEnvironmentVariables() {
         return environmentVariables;
     }
 
