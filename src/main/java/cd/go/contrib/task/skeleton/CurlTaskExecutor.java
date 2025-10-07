@@ -16,11 +16,13 @@
 
 package cd.go.contrib.task.skeleton;
 
-import com.thoughtworks.go.plugin.api.task.*;
+import com.thoughtworks.go.plugin.api.task.JobConsoleLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static cd.go.contrib.task.skeleton.TaskPlugin.consoleLogger;
 
 // TODO: execute your task and setup stdout/stderr to pipe the streams to GoCD
 public class CurlTaskExecutor {
@@ -37,11 +39,13 @@ public class CurlTaskExecutor {
 
     private Result runCommand(Context taskContext, TaskConfig taskTaskConfig, JobConsoleLogger console) throws IOException, InterruptedException {
         ProcessBuilder curl = createCurlCommandWithOptions(taskContext, taskTaskConfig);
-        console.printLine("Launching command: " + curl.command());
+        consoleLogger.info("Launching command: " + curl.command());
         curl.environment().putAll(taskContext.getEnvironmentVariables());
         console.printEnvironment(curl.environment());
 
         Process curlProcess = curl.start();
+        
+        consoleLogger.process(curlProcess.getInputStream(), curlProcess.getErrorStream());
         console.readErrorOf(curlProcess.getErrorStream());
         console.readOutputOf(curlProcess.getInputStream());
 
@@ -49,9 +53,11 @@ public class CurlTaskExecutor {
         curlProcess.destroy();
 
         if (exitCode != 0) {
+            consoleLogger.error("Failed downloading file. Please check the output");
             return new Result(false, "Failed downloading file. Please check the output");
         }
 
+        consoleLogger.info("Downloaded file: " + CURLED_FILE);
         return new Result(true, "Downloaded file: " + CURLED_FILE);
     }
 
