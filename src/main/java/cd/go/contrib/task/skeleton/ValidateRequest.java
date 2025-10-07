@@ -25,12 +25,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ValidateRequest {
+    @SuppressWarnings("unchecked")
     public GoPluginApiResponse execute(GoPluginApiRequest request) {
         HashMap<String, Object> validationResult = new HashMap<>();
         int responseCode = DefaultGoPluginApiResponse.SUCCESS_RESPONSE_CODE;
-        Map configMap = (Map) new GsonBuilder().create().fromJson(request.requestBody(), Object.class);
-        HashMap errorMap = new HashMap();
-        if (!configMap.containsKey(TaskPlugin.URL_PROPERTY) || ((Map) configMap.get(TaskPlugin.URL_PROPERTY)).get("value") == null || ((String) ((Map) configMap.get(TaskPlugin.URL_PROPERTY)).get("value")).trim().isEmpty()) {
+        Map<String, ?> configMap = (Map<String, ?>) new GsonBuilder().create().fromJson(request.requestBody(), Object.class);
+        Map<String, String> errorMap = new HashMap<>();
+        if (!configMap.containsKey(TaskPlugin.URL_PROPERTY) || ((Map<String, ?>) configMap.get(TaskPlugin.URL_PROPERTY)).get("value") == null || ((String) ((Map<String, ?>) configMap.get(TaskPlugin.URL_PROPERTY)).get("value")).trim().isEmpty()) {
             errorMap.put(TaskPlugin.URL_PROPERTY, "URL cannot be empty");
         }
         validationResult.put("errors", errorMap);

@@ -17,114 +17,75 @@
 plugins {
   id 'java'
 }
+apply from: "https://raw.githubusercontent.com/gocd/gocd-plugin-gradle-task-helpers/master/helper.gradle?_=${(int) (new Date().toInstant().epochSecond / 60)}"
 
-def gitRevision = { ->
-  def hashStdOut = new ByteArrayOutputStream()
-  exec {
-    commandLine "git", "log", "-n", "1", "--format=%H"
-    standardOutput = hashStdOut
+gocdPlugin {
+  id = 'cd.go.contrib.task.skeleton'
+  pluginVersion = '0.2'
+  goCdVersion = '22.1.0'
+  name = 'Example Task Plugin'
+  description = 'Some longer description of your plugin goes here'
+  vendorName = 'Acme Corp'
+  vendorUrl = 'https://github.com/user/repository'
+
+  githubRepo {
+    owner = System.getenv('GITHUB_USER') ?: 'bob'
+    repo = 'task-skeleton-plugin'
+    token = System.getenv('GITHUB_TOKEN') ?: 'bad-token'
   }
 
-  return hashStdOut.toString().trim()
+  pluginProject = project
+
+  prerelease = !"No".equalsIgnoreCase(System.getenv('PRERELEASE'))
+  prereleaseDryrun = !"Yes".equalsIgnoreCase(System.getenv('PRERELEASE'))
+  assetsToRelease = [project.tasks.jar]
 }
 
-project.ext.gitRevision = gitRevision()
+group = 'cd.go.contrib'
+version = gocdPlugin.fullVersion(project)
 
-group = 'cd.go.contrib.task.skeleton'
-version = '0.2-SNAPSHOT'
-
-// these values that go into plugin.xml
-// TODO: change these
-project.ext.pluginDesc = [
-  id         : 'cd.go.contrib.task.skeleton',
-  version    : project.version,
-  goCdVersion: '16.12.0',
-  name       : 'Example Task Plugin',
-  description: 'Some longer description of your plugin goes here',
-  vendorName : 'Acme Corp',
-  vendorUrl  : 'https://github.com/user/repository'
-]
-
-java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
-}
-
-// In this section you declare where to find the dependencies of your project
 repositories {
   mavenCentral()
   mavenLocal()
 }
 
-sourceSets {
-  test {
-    java {
-      compileClasspath += configurations.compileOnly
-      runtimeClasspath += configurations.compileOnly
-    }
-  }
+java {
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+  options.release = 17
+}
+
+ext {
+  deps = [
+    gocdPluginApi: 'cd.go.plugin:go-plugin-api:25.3.0',
+  ]
+
+  versions = project.ext.deps.collectEntries { lib, libGav -> [lib, libGav.split(':').last()] }
 }
 
 dependencies {
-  compileOnly 'cd.go.plugin:go-plugin-api:19.2.0'
-  implementation 'com.google.code.gson:gson:2.8.5'
-  implementation 'commons-io:commons-io:2.6'
+  compileOnly project.deps.gocdPluginApi
+  implementation 'com.google.code.gson:gson:2.13.2'
 
-  testImplementation 'junit:junit:4.12'
-  testImplementation 'org.hamcrest:hamcrest:2.1'
-  testImplementation 'org.skyscreamer:jsonassert:1.5.0'
+  testImplementation project.deps.gocdPluginApi
+  testImplementation platform('org.junit:junit-bom:6.0.0')
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+  testImplementation 'org.mockito:mockito-core:5.20.0'
+  testImplementation 'org.assertj:assertj-core:3.27.6'
 }
 
-processResources {
-  from("src/main/resource-templates") {
-    filesMatching('plugin.xml') {
-      expand project.pluginDesc
-    }
-
-    filesMatching('plugin.properties') {
-      expand project.pluginDesc
-    }
-  }
-}
 
 test {
-  testLogging {
-    showStandardStreams = true
-
-    exceptionFormat 'full'
-
-    beforeSuite { suite ->
-      if (suite.parent) {
-        logger.quiet("Running ${suite.name}")
-      }
-    }
-
-    afterSuite { suite, result ->
-      if (suite.parent) {
-        logger.quiet("Tests run: ${result.testCount}, Failures: ${result.failedTestCount}, Skipped: ${result.skippedTestCount}, Time elapsed: ${(result.endTime - result.startTime) / 1000.00} sec")
-        if (result.resultType == TestResult.ResultType.FAILURE) {
-          logger.quiet("Test ${suite.name} FAILED")
-        }
-      } else {
-        logger.quiet("Total tests run: ${result.testCount}, Failures: ${result.failedTestCount}, Skipped: ${result.skippedTestCount}, Time elapsed: ${(result.endTime - result.startTime) / 1000.00} sec")
-      }
-    }
-  }
+  useJUnitPlatform()
 }
 
 jar {
-  manifest {
-    attributes(
-      'Go-Version': project.version,
-      'ImplementationVersion': project.version,
-      'Go-Revision': project.gitRevision,
-      'Implementation-Title': project.name,
-      'Implementation-Version': project.version,
-      'Source-Compatibility': project.sourceCompatibility,
-      'Target-Compatibility': project.targetCompatibility
-    )
-  }
-
   from(configurations.runtimeClasspath) {
     into "lib/"
   }
